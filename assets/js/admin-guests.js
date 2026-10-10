@@ -264,12 +264,8 @@
         });
         return matrix;
     }
-    var editingGuest = null;
-    function maxCompanions(guest) {
-        var invited = Math.max(1, Number(guest && guest.invited_count) || 1);
-        var max = Math.max(0, invited - 1);
-        if (Number(cfg.settings.allow_plus_one_all) === 1) max = Math.max(max, 1);
-        return Math.min(10, max);
+    function maxCompanions() {
+        return 10;
     }
     function readEditCompanions() {
         var people = [];
@@ -282,7 +278,7 @@
         return people;
     }
     function renderEditCompanions(seed) {
-        var max = maxCompanions(editingGuest);
+        var max = maxCompanions();
         var input = document.getElementById('edit-companion-count');
         input.max = String(max);
         var count = parseInt(input.value, 10);
@@ -304,7 +300,6 @@
     }
     function openEdit(guest) {
         var response = guest.response || {};
-        editingGuest = guest;
         document.getElementById('edit-id').value = guest.id;
         document.getElementById('wedding-edit-name').textContent = guest.salutation + ' ' + guest.name;
         document.getElementById('edit-attending').value = response.attending || 'yes';

@@ -61,18 +61,7 @@ class Wedding_RSVP_Response_Repo {
     }
 
     public static function max_companions(array $guest, array $settings) {
-        $invited = (int) (isset($guest['invited_count']) ? $guest['invited_count'] : 1);
-        if ($invited < 1) {
-            $invited = 1;
-        }
-        $max = $invited - 1;
-        if (Wedding_Stats::flag($settings, 'allow_plus_one_all', true)) {
-            $max = max($max, 1);
-        }
-        if ($max < 0) {
-            $max = 0;
-        }
-        return min(10, $max);
+        return 10;
     }
 
     public static function companion_list($response) {

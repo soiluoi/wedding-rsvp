@@ -194,6 +194,15 @@ class StatsAndResponseTest extends TestCase {
         $this->assertSame(1, $units['children']);
         $this->assertSame(3, $units['bus']);
         $this->assertSame('An · Người lớn, Bé Na · Trẻ em', Wedding_RSVP_Templates::companion_label(array('companions' => $decoded)));
+        $this->assertSame(10, Wedding_RSVP_Response_Repo::max_companions(array('invited_count' => 1), $this->settings()));
+        $solo = Wedding_RSVP_Response_Repo::normalize(array(
+            'attending' => 'yes',
+            'ride_bus' => '0',
+            'companions' => array(
+                array('name' => 'An', 'type' => 'adult'),
+            ),
+        ), array('invited_count' => 1), $this->settings(), 'guest');
+        $this->assertSame(1, $solo['has_companion']);
 
         try {
             Wedding_RSVP_Response_Repo::normalize(

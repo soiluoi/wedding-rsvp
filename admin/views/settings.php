@@ -32,7 +32,7 @@ $permalinks = (string) get_option('permalink_structure');
         <h2>Form và cách tính</h2>
         <table class="form-table">
             <tr><th><label for="opening_text">Lời ngỏ</label></th><td><textarea id="opening_text" name="opening_text" rows="4" class="large-text"><?php echo esc_textarea($settings['opening_text']); ?></textarea><p class="description">Hiện ngay sau câu chào trên form.</p></td></tr>
-            <tr><th>Người đi cùng</th><td><label><input type="checkbox" name="allow_plus_one_all" value="1" <?php checked($settings['allow_plus_one_all']); ?>> Khách có Số người = 1 vẫn được đi cùng 1 người. Bỏ chọn thì số người đi cùng tối đa là Số người trừ 1.</label></td></tr>
+            <tr><th>Người đi cùng</th><td><p class="description">Mỗi khách khai tối đa 10 người đi cùng. Cột Số người trên sheet chỉ là số giả định, không giới hạn form.</p></td></tr>
             <tr><th><label for="people_per_table">Số người mỗi bàn</label></th><td><input type="number" min="1" id="people_per_table" name="people_per_table" value="<?php echo esc_attr((string) $settings['people_per_table']); ?>"></td></tr>
             <tr><th>Trẻ em ở bàn</th><td><label><input type="checkbox" name="child_counts_for_table" value="1" <?php checked($settings['child_counts_for_table']); ?>> Trẻ em tính một suất</label></td></tr>
             <tr><th><label for="seats_per_bus">Ghế khách mỗi xe</label></th><td><input type="number" min="1" id="seats_per_bus" name="seats_per_bus" value="<?php echo esc_attr((string) $settings['seats_per_bus']); ?>"><p class="description">Xe 45 chỗ, trừ tài xế và phụ xe, thường là 43.</p></td></tr>
