@@ -118,43 +118,46 @@ $payload = array(
                     <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
                 </div>
                 <fieldset>
-                    <legend>Bạn có tham dự được không?</legend>
+                    <legend>Bạn có tham dự được không? <span class="req" aria-hidden="true">*</span></legend>
                     <label class="choice"><input type="radio" name="attending" value="yes" <?php checked($response && $response['attending'] === 'yes'); ?>><span>Có, mình sẽ đến</span></label>
                     <label class="choice"><input type="radio" name="attending" value="no" <?php checked($response && $response['attending'] === 'no'); ?>><span>Rất tiếc, mình không đến được</span></label>
                 </fieldset>
                 <div data-show="coming" <?php echo $coming ? '' : 'hidden'; ?>>
                     <fieldset>
-                        <legend>Bạn sẽ đi xe đưa đón chung chứ?</legend>
-                        <label class="choice"><input type="radio" name="ride_bus" value="1" <?php checked($ride === 1); ?>><span>Đi xe chung</span></label>
-                        <label class="choice"><input type="radio" name="ride_bus" value="0" <?php checked($ride === 0); ?>><span>Mình tự đi</span></label>
+                        <legend>Bạn sẽ di chuyển cùng xe đưa đón chung chứ? <span class="req" aria-hidden="true">*</span></legend>
+                        <label class="choice"><input type="radio" name="ride_bus" value="1" <?php checked($ride === 1); ?>><span>Di chuyển xe chung</span></label>
+                        <label class="choice"><input type="radio" name="ride_bus" value="0" <?php checked($ride === 0); ?>><span>Mình tự di chuyển</span></label>
                     </fieldset>
                     <div class="bus" data-show="bus" <?php echo $show_bus ? '' : 'hidden'; ?>>
                         <?php echo Wedding_RSVP_Templates::format_plain($settings['bus_notice_text']); ?>
                     </div>
-                    <label class="field" data-show="bus" <?php echo $show_bus ? '' : 'hidden'; ?>>Số điện thoại
-                        <input type="tel" name="phone" inputmode="tel" autocomplete="tel" value="<?php echo esc_attr($response && $response['phone'] ? Wedding_RSVP_Exporter::format_phone($response['phone']) : ''); ?>" placeholder="(0936) 123 456">
+                    <label class="field" data-show="bus" <?php echo $show_bus ? '' : 'hidden'; ?>>Số điện thoại <span class="req" aria-hidden="true">*</span>
+                        <input type="tel" name="phone" inputmode="numeric" autocomplete="tel" value="<?php echo esc_attr($response && $response['phone'] ? $response['phone'] : ''); ?>" placeholder="(----) --- ---">
                     </label>
                     <?php if ($view['max_companions'] > 0) : ?>
-                        <label class="field">Số người đi cùng
-                            <input type="number" name="companion_count" min="0" max="<?php echo (int) $view['max_companions']; ?>" inputmode="numeric" value="<?php echo (int) $companion_count; ?>">
-                        </label>
-                        <p class="hint">Người đi cùng sẽ đi chung xe với bạn. Tối đa <?php echo (int) $view['max_companions']; ?> người.</p>
-                        <div id="companion-list">
-                            <?php foreach ($companions as $index => $person) : ?>
-                                <div class="companion">
-                                    <p class="companion-title">Người đi cùng <?php echo (int) $index + 1; ?></p>
-                                    <label class="field">Tên
-                                        <input type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>">
-                                    </label>
-                                    <div class="choice-row">
-                                        <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="adult" <?php checked($person['type'] === 'adult'); ?>><span>Người lớn</span></label>
-                                        <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="child" <?php checked($person['type'] === 'child'); ?>><span>Trẻ em</span></label>
+                        <label class="check"><input type="checkbox" name="has_companion" value="1" <?php checked($companion_count > 0); ?>> Có người đi cùng</label>
+                        <div data-show="companions" <?php echo $companion_count > 0 ? '' : 'hidden'; ?>>
+                            <label class="field">Số người đi cùng <span class="req" aria-hidden="true">*</span>
+                                <input type="number" name="companion_count" min="1" max="<?php echo (int) $view['max_companions']; ?>" inputmode="numeric" value="<?php echo $companion_count > 0 ? (int) $companion_count : 1; ?>">
+                            </label>
+                            <p class="hint">Người đi cùng sẽ đi chung xe với bạn.</p>
+                            <div id="companion-list">
+                                <?php foreach ($companions as $index => $person) : ?>
+                                    <div class="companion">
+                                        <p class="companion-title">Người đi cùng <?php echo (int) $index + 1; ?> <span class="req" aria-hidden="true">*</span></p>
+                                        <label class="field">Tên <span class="req" aria-hidden="true">*</span>
+                                            <input type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>">
+                                        </label>
+                                        <div class="choice-row">
+                                            <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="adult" <?php checked($person['type'] === 'adult'); ?>><span>Người lớn</span></label>
+                                            <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="child" <?php checked($person['type'] === 'child'); ?>><span>Trẻ em</span></label>
+                                        </div>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
-                    <label class="field">Ghi chú ăn uống <span class="optional">không bắt buộc</span>
+                    <label class="field">Ghi chú ăn uống
                         <textarea name="diet_note" rows="4" placeholder="<?php echo esc_attr($companion_count > 0 ? 'Nếu bạn hay người đi cùng ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé' : 'Nếu bạn ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé'); ?>"><?php echo esc_textarea($response && $response['diet_note'] ? $response['diet_note'] : ''); ?></textarea>
                     </label>
                 </div>

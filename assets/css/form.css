@@ -68,7 +68,9 @@ h1 {
     white-space: nowrap;
     font-weight: 600;
     font-size: clamp(0.82rem, 3.6vw, 1rem);
+    color: var(--wine);
 }
+.req { color: #c62828; }
 .place-link { color: var(--wine); }
 .banner, .locked, .form-error {
     padding: 0.75rem 0.85rem;
@@ -103,7 +105,8 @@ legend, .field, .check {
     font-weight: 600;
     margin-bottom: 0.45rem;
 }
-.optional { font-weight: 400; color: var(--muted); }
+input[name="phone"]::placeholder { color: #fff; }
+input[name="phone"]:focus::placeholder { color: #b7aea6; }
 
 .choice {
     display: block;

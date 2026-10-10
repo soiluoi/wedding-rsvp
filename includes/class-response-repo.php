@@ -109,7 +109,13 @@ class Wedding_RSVP_Response_Repo {
             }
             return null;
         }
-        $compact = preg_replace('/[\s.\-]/', '', $raw);
+        $compact = preg_replace('/[\s.\-()]/', '', $raw);
+        if ($compact === '') {
+            if ($required) {
+                throw new Wedding_RSVP_Validation_Exception('Bạn để lại số điện thoại để nhà xe tiện liên hệ nhé.');
+            }
+            return null;
+        }
         if (strpos($compact, '+84') === 0) {
             $compact = '0' . substr($compact, 3);
         }

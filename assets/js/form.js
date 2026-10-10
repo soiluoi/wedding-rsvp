@@ -28,16 +28,19 @@
         });
     }
 
+    function bringingCompanions() {
+        var box = field('has_companion');
+        return !!(box && box.checked);
+    }
+
     function companionCount() {
         var input = field('companion_count');
-        if (!input) return 0;
+        if (!input || !bringingCompanions()) return 0;
         var count = parseInt(input.value, 10);
-        if (isNaN(count) || count < 0) count = 0;
-        var max = data.maxCompanions || 0;
-        if (count > max) {
-            count = max;
-            input.value = String(max);
-        }
+        if (isNaN(count) || count < 1) count = 1;
+        var max = data.maxCompanions || 10;
+        if (count > max) count = max;
+        if (input.value !== String(count)) input.value = String(count);
         return count;
     }
 
@@ -60,8 +63,8 @@
         for (var i = 0; i < count; i++) {
             var person = existing[i] || {name: '', type: ''};
             html += '<div class="companion">';
-            html += '<p class="companion-title">Người đi cùng ' + (i + 1) + '</p>';
-            html += '<label class="field">Tên<input type="text" name="companion_name_' + i + '" value="' + esc(person.name || '') + '"></label>';
+            html += '<p class="companion-title">Người đi cùng ' + (i + 1) + ' <span class="req" aria-hidden="true">*</span></p>';
+            html += '<label class="field">Tên <span class="req" aria-hidden="true">*</span><input type="text" name="companion_name_' + i + '" value="' + esc(person.name || '') + '"></label>';
             html += '<div class="choice-row">';
             html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="adult"' + (person.type === 'adult' ? ' checked' : '') + '><span>Người lớn</span></label>';
             html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="child"' + (person.type === 'child' ? ' checked' : '') + '><span>Trẻ em</span></label>';
@@ -74,7 +77,7 @@
     function updateDietPlaceholder() {
         var note = field('diet_note');
         if (!note) return;
-        note.placeholder = companionCount() > 0
+        note.placeholder = bringingCompanions() && companionCount() > 0
             ? 'Nếu bạn hay người đi cùng ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé'
             : 'Nếu bạn ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé';
     }
@@ -85,13 +88,17 @@
         var bus = coming && selected('ride_bus') === '1';
         toggle('[data-show="coming"]', coming);
         toggle('[data-show="bus"]', bus);
-        if (field('companion_count')) {
+        var withPeople = coming && bringingCompanions();
+        toggle('[data-show="companions"]', withPeople);
+        if (withPeople) {
             var count = companionCount();
             if (form.querySelectorAll('.companion').length !== count) {
                 renderCompanions(count);
             } else {
                 updateDietPlaceholder();
             }
+        } else {
+            updateDietPlaceholder();
         }
     }
 
@@ -110,7 +117,7 @@
         if (payload.ride_bus !== '0' && payload.ride_bus !== '1') {
             return 'Bạn chọn giúp mình cách đi lại nhé.';
         }
-        if (payload.ride_bus === '1' && !String(payload.phone || '').trim()) {
+        if (payload.ride_bus === '1' && phoneDigits(payload.phone).length !== 10) {
             return 'Bạn để lại số điện thoại để nhà xe tiện liên hệ nhé.';
         }
         var people = payload.companions || [];
@@ -138,8 +145,10 @@
             if (payload.ride_bus === '1') {
                 payload.phone = field('phone').value;
             }
-            if (field('companion_count')) {
+            if (bringingCompanions()) {
                 payload.companions = readCompanions().slice(0, companionCount());
+            } else {
+                payload.companions = [];
             }
             payload.diet_note = field('diet_note').value;
         }
@@ -205,10 +214,11 @@
         form.querySelectorAll('input[name="ride_bus"]').forEach(function (el) {
             el.checked = response.ride_bus != null && el.value === String(response.ride_bus);
         });
-        if (field('phone')) field('phone').value = response.phone || '';
+        if (field('phone')) paintPhone(response.phone || '', false);
         var people = companionPeople(response);
+        if (field('has_companion')) field('has_companion').checked = people.length > 0;
         if (field('companion_count')) {
-            field('companion_count').value = String(people.length);
+            field('companion_count').value = String(people.length > 0 ? people.length : 1);
             renderCompanions(people.length, people);
         }
         if (field('diet_note')) field('diet_note').value = response.diet_note || '';
@@ -240,6 +250,63 @@
         summary.hidden = false;
         form.hidden = true;
         summary.scrollIntoView({block: 'start'});
+    }
+
+    function phoneDigits(value) {
+        return String(value || '').replace(/\D/g, '').slice(0, 10);
+    }
+
+    function formatPhoneMask(digits) {
+        var chars = phoneDigits(digits).split('');
+        while (chars.length < 10) chars.push('-');
+        return '(' + chars.slice(0, 4).join('') + ') ' + chars.slice(4, 7).join('') + ' ' + chars.slice(7, 10).join('');
+    }
+
+    function caretAfterDigits(formatted, count) {
+        if (!count) return 1;
+        var seen = 0;
+        var i;
+        for (i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted.charAt(i))) {
+                seen++;
+                if (seen === count) return i + 1;
+            }
+        }
+        var dash = formatted.indexOf('-');
+        return dash === -1 ? formatted.length : dash;
+    }
+
+    function setCaret(input, pos) {
+        if (typeof input.setSelectionRange !== 'function') return;
+        input.setSelectionRange(pos, pos);
+    }
+
+    function paintPhone(value, showMask) {
+        var input = field('phone');
+        if (!input) return;
+        var digits = phoneDigits(value == null ? input.value : value);
+        if (!digits) {
+            input.value = showMask ? '(----) --- ---' : '';
+            if (showMask) setCaret(input, 1);
+            return;
+        }
+        input.value = formatPhoneMask(digits);
+        setCaret(input, caretAfterDigits(input.value, digits.length));
+    }
+
+    var phoneInput = field('phone');
+    if (phoneInput) {
+        paintPhone(phoneInput.value, false);
+        phoneInput.addEventListener('focus', function () {
+            if (!phoneDigits(phoneInput.value)) paintPhone('', true);
+        });
+        phoneInput.addEventListener('blur', function () {
+            if (!phoneDigits(phoneInput.value)) phoneInput.value = '';
+        });
+        phoneInput.addEventListener('input', function () {
+            var digits = phoneDigits(phoneInput.value);
+            paintPhone(digits, true);
+        });
     }
 
     form.addEventListener('change', sync);

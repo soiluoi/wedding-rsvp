@@ -237,6 +237,7 @@ class StatsAndResponseTest extends TestCase {
         $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('0901.234.567', true));
         $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('+84 901 234 567', true));
         $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('84901234567', true));
+        $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('(0901) 234 567', true));
         $this->assertSame('0901 234 567', Wedding_RSVP_Exporter::format_phone('0901234567'));
     }
 
