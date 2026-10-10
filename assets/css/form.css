@@ -105,9 +105,6 @@ legend, .field, .check {
     font-weight: 600;
     margin-bottom: 0.45rem;
 }
-input[name="phone"]::placeholder { color: #fff; }
-input[name="phone"]:focus::placeholder { color: #b7aea6; }
-
 .choice {
     display: block;
     margin: 0 0 0.5rem;
@@ -142,7 +139,7 @@ input[name="phone"]:focus::placeholder { color: #b7aea6; }
 .companion { margin: 0 0 0.9rem; }
 .companion-title { margin: 0 0 0.35rem; font-weight: 600; }
 
-.field input, .field textarea, select {
+.field input, .field textarea, .companion-name, select {
     display: block;
     width: 100%;
     margin-top: 0.35rem;
@@ -153,7 +150,17 @@ input[name="phone"]:focus::placeholder { color: #b7aea6; }
     color: var(--ink);
     font: inherit;
     font-size: 16px;
+    font-weight: 400;
 }
+.companion-name { margin-top: 0; }
+.field input::placeholder,
+.field textarea::placeholder,
+.companion-name::placeholder {
+    font-weight: 300;
+    color: #b7aea6;
+}
+input[name="phone"]::placeholder { color: #fff; }
+input[name="phone"]:focus::placeholder { color: #b7aea6; }
 .bus {
     margin: 0 0 1rem;
     padding: 0.9rem 1rem;

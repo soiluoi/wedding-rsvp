@@ -44,7 +44,7 @@ $payload = array(
     <title><?php echo esc_html($view['og_title']); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo esc_url(WEDDING_RSVP_URL . 'assets/css/form.css?ver=' . rawurlencode(wedding_rsvp_asset_version('assets/css/form.css'))); ?>">
 </head>
 <body>
@@ -145,9 +145,7 @@ $payload = array(
                                 <?php foreach ($companions as $index => $person) : ?>
                                     <div class="companion">
                                         <p class="companion-title">Người đi cùng <?php echo (int) $index + 1; ?> <span class="req" aria-hidden="true">*</span></p>
-                                        <label class="field">Tên <span class="req" aria-hidden="true">*</span>
-                                            <input type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>">
-                                        </label>
+                                        <input class="companion-name" type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>" placeholder="Tên" aria-label="Tên">
                                         <div class="choice-row">
                                             <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="adult" <?php checked($person['type'] === 'adult'); ?>><span>Người lớn</span></label>
                                             <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="child" <?php checked($person['type'] === 'child'); ?>><span>Trẻ em</span></label>
