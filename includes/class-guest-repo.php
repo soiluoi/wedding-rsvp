@@ -97,7 +97,7 @@ class Wedding_RSVP_Guest_Repo {
     public function all_detailed() {
         global $wpdb;
         $sql = 'SELECT g.*,
-            r.attending, r.ride_bus, r.phone, r.diet_note, r.has_companion, r.companion_name,
+            r.attending, r.ride_bus, r.phone, r.diet_note, r.companions, r.has_companion, r.companion_name,
             r.companion_type, r.companion_age, r.message AS guest_message, r.source AS response_source,
             r.update_count, r.submitted_at, r.updated_at AS response_updated_at,
             p.name AS pickup_name, p.address AS pickup_address, p.pickup_time
@@ -268,6 +268,7 @@ class Wedding_RSVP_Guest_Repo {
                 'ride_bus' => $row['ride_bus'] === null || $row['ride_bus'] === '' ? null : (int) $row['ride_bus'],
                 'phone' => $row['phone'] !== null && $row['phone'] !== '' ? $row['phone'] : null,
                 'diet_note' => $row['diet_note'] !== null && $row['diet_note'] !== '' ? $row['diet_note'] : null,
+                'companions' => Wedding_RSVP_Response_Repo::companion_list($row),
                 'has_companion' => (int) $row['has_companion'] === 1 ? 1 : 0,
                 'companion_name' => $row['companion_name'] !== null && $row['companion_name'] !== '' ? $row['companion_name'] : null,
                 'companion_type' => $row['companion_type'] !== null && $row['companion_type'] !== '' ? $row['companion_type'] : null,

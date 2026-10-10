@@ -28,17 +28,71 @@
         });
     }
 
+    function companionCount() {
+        var input = field('companion_count');
+        if (!input) return 0;
+        var count = parseInt(input.value, 10);
+        if (isNaN(count) || count < 0) count = 0;
+        var max = data.maxCompanions || 0;
+        if (count > max) {
+            count = max;
+            input.value = String(max);
+        }
+        return count;
+    }
+
+    function readCompanions() {
+        var people = [];
+        var rows = form.querySelectorAll('.companion');
+        rows.forEach(function (row, index) {
+            var name = row.querySelector('[name="companion_name_' + index + '"]');
+            var type = row.querySelector('[name="companion_type_' + index + '"]:checked');
+            people.push({name: name ? name.value : '', type: type ? type.value : ''});
+        });
+        return people;
+    }
+
+    function renderCompanions(count, seed) {
+        var list = document.getElementById('companion-list');
+        if (!list) return;
+        var existing = seed || readCompanions();
+        var html = '';
+        for (var i = 0; i < count; i++) {
+            var person = existing[i] || {name: '', type: ''};
+            html += '<div class="companion">';
+            html += '<p class="companion-title">Người đi cùng ' + (i + 1) + '</p>';
+            html += '<label class="field">Tên<input type="text" name="companion_name_' + i + '" value="' + esc(person.name || '') + '"></label>';
+            html += '<div class="choice-row">';
+            html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="adult"' + (person.type === 'adult' ? ' checked' : '') + '><span>Người lớn</span></label>';
+            html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="child"' + (person.type === 'child' ? ' checked' : '') + '><span>Trẻ em</span></label>';
+            html += '</div></div>';
+        }
+        list.innerHTML = html;
+        updateDietPlaceholder();
+    }
+
+    function updateDietPlaceholder() {
+        var note = field('diet_note');
+        if (!note) return;
+        note.placeholder = companionCount() > 0
+            ? 'Nếu bạn hay người đi cùng ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé'
+            : 'Nếu bạn ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé';
+    }
+
     function sync() {
         var attending = selected('attending');
-        var coming = attending === 'yes' || attending === 'maybe';
+        var coming = attending === 'yes';
         var bus = coming && selected('ride_bus') === '1';
-        var box = field('has_companion');
-        var plus = coming && data.allowPlusOne && box && box.checked;
-        var child = plus && selected('companion_type') === 'child';
         toggle('[data-show="coming"]', coming);
         toggle('[data-show="bus"]', bus);
-        toggle('[data-show="plus"]', plus);
-        toggle('[data-show="child"]', child);
+        if (field('companion_count')) {
+            var count = companionCount();
+            if (form.querySelectorAll('.companion').length !== count) {
+                renderCompanions(count);
+            } else {
+                updateDietPlaceholder();
+            }
+        }
     }
 
     function showError(message) {
@@ -59,15 +113,13 @@
         if (payload.ride_bus === '1' && !String(payload.phone || '').trim()) {
             return 'Bạn để lại số điện thoại để nhà xe tiện liên hệ nhé.';
         }
-        if (payload.has_companion) {
-            if (payload.companion_type !== 'adult' && payload.companion_type !== 'child') {
-                return 'Bạn chọn giúp mình người đi cùng là người lớn hay trẻ em nhé.';
+        var people = payload.companions || [];
+        for (var i = 0; i < people.length; i++) {
+            if (people[i].type !== 'adult' && people[i].type !== 'child') {
+                return 'Bạn chọn người đi cùng ' + (i + 1) + ' là người lớn hay trẻ em nhé.';
             }
-            if (payload.companion_type === 'child' && !/^\d+$/.test(String(payload.companion_age || ''))) {
-                return 'Bạn nhập tuổi của bé (từ 0 đến 15) giúp mình nhé.';
-            }
-            if (payload.companion_type === 'child' && Number(payload.companion_age) > 15) {
-                return 'Bạn nhập tuổi của bé (từ 0 đến 15) giúp mình nhé.';
+            if (!String(people[i].name || '').trim()) {
+                return 'Bạn nhập tên người đi cùng ' + (i + 1) + ' giúp mình nhé.';
             }
         }
         return '';
@@ -78,23 +130,16 @@
         var attending = selected('attending');
         var payload = {
             attending: attending,
-            message: field('message').value,
             nonce: data.nonce,
             website: field('website').value
         };
-        if (attending === 'yes' || attending === 'maybe') {
+        if (attending === 'yes') {
             payload.ride_bus = selected('ride_bus');
             if (payload.ride_bus === '1') {
                 payload.phone = field('phone').value;
             }
-            var box = field('has_companion');
-            payload.has_companion = box && box.checked ? 1 : 0;
-            if (payload.has_companion) {
-                payload.companion_name = field('companion_name').value;
-                payload.companion_type = selected('companion_type');
-                if (payload.companion_type === 'child') {
-                    payload.companion_age = field('companion_age').value;
-                }
+            if (field('companion_count')) {
+                payload.companions = readCompanions().slice(0, companionCount());
             }
             payload.diet_note = field('diet_note').value;
         }
@@ -133,18 +178,23 @@
         return '';
     }
 
+    function companionPeople(response) {
+        if (response && Array.isArray(response.companions) && response.companions.length) {
+            return response.companions;
+        }
+        if (response && Number(response.has_companion) === 1 && (response.companion_type === 'adult' || response.companion_type === 'child')) {
+            return [{name: response.companion_name || '', type: response.companion_type}];
+        }
+        return [];
+    }
+
     function companion(response) {
-        if (!response || Number(response.has_companion) !== 1) {
-            return 'Không';
-        }
-        var parts = [];
-        if (response.companion_name) parts.push(response.companion_name);
-        if (response.companion_type === 'child') parts.push('Trẻ em');
-        if (response.companion_type === 'adult') parts.push('Người lớn');
-        if (response.companion_type === 'child' && response.companion_age != null && response.companion_age !== '') {
-            parts.push(response.companion_age + ' tuổi');
-        }
-        return parts.join(' · ');
+        var people = companionPeople(response);
+        if (!people.length) return 'Không';
+        return people.map(function (person) {
+            var type = person.type === 'child' ? 'Trẻ em' : 'Người lớn';
+            return person.name ? person.name + ' · ' + type : type;
+        }).join(', ');
     }
 
     function fill(response) {
@@ -156,15 +206,12 @@
             el.checked = response.ride_bus != null && el.value === String(response.ride_bus);
         });
         if (field('phone')) field('phone').value = response.phone || '';
-        var box = field('has_companion');
-        if (box) box.checked = Number(response.has_companion) === 1;
-        if (field('companion_name')) field('companion_name').value = response.companion_name || '';
-        form.querySelectorAll('input[name="companion_type"]').forEach(function (el) {
-            el.checked = el.value === response.companion_type;
-        });
-        if (field('companion_age')) field('companion_age').value = response.companion_age == null ? '' : response.companion_age;
+        var people = companionPeople(response);
+        if (field('companion_count')) {
+            field('companion_count').value = String(people.length);
+            renderCompanions(people.length, people);
+        }
         if (field('diet_note')) field('diet_note').value = response.diet_note || '';
-        if (field('message')) field('message').value = response.message || '';
         sync();
     }
 
@@ -177,9 +224,8 @@
                 html += '<li><span>Điện thoại</span>' + phone(response.phone) + '</li>';
             }
             html += '<li><span>Người đi cùng</span>' + esc(companion(response)) + '</li>';
-            if (response.diet_note) html += '<li><span>Ăn uống</span>' + esc(response.diet_note) + '</li>';
+            if (response.diet_note) html += '<li><span>Ăn uống</span>' + esc(response.diet_note).replace(/\n/g, '<br>') + '</li>';
         }
-        if (response.message) html += '<li><span>Lời chúc</span>' + esc(response.message) + '</li>';
         html += '</ul>';
         if (pickup) {
             html += '<div class="pickup"><strong>Điểm đón của bạn</strong><p>' + esc(pickup.name);
@@ -197,6 +243,9 @@
     }
 
     form.addEventListener('change', sync);
+    form.addEventListener('input', function (event) {
+        if (event.target && event.target.name === 'companion_count') sync();
+    });
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         var payload = collect();
@@ -212,12 +261,8 @@
                 attending: payload.attending,
                 ride_bus: payload.ride_bus == null ? null : Number(payload.ride_bus),
                 phone: payload.phone || null,
-                has_companion: payload.has_companion ? 1 : 0,
-                companion_name: payload.companion_name || null,
-                companion_type: payload.companion_type || null,
-                companion_age: payload.companion_age == null || payload.companion_age === '' ? null : Number(payload.companion_age),
-                diet_note: payload.diet_note || null,
-                message: payload.message || null
+                companions: payload.companions || [],
+                diet_note: payload.diet_note || null
             }, null, 'Bản xem thử, chưa lưu');
             return;
         }

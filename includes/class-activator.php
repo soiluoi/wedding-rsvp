@@ -3,6 +3,7 @@
 class Wedding_RSVP_Activator {
     public static function activate() {
         self::create_tables();
+        self::upgrade_response_columns();
         if (function_exists('get_option') && get_option(Wedding_RSVP_Settings::OPTION, null) === null) {
             Wedding_RSVP_Settings::update(Wedding_RSVP_Settings::defaults());
         }
@@ -22,6 +23,7 @@ class Wedding_RSVP_Activator {
             return;
         }
         self::create_tables();
+        self::upgrade_response_columns();
         if (get_option(Wedding_RSVP_Settings::OPTION, null) === null) {
             Wedding_RSVP_Settings::update(Wedding_RSVP_Settings::defaults());
         }
@@ -66,7 +68,8 @@ class Wedding_RSVP_Activator {
             attending varchar(10) NOT NULL DEFAULT '',
             ride_bus tinyint(1) NULL DEFAULT NULL,
             phone varchar(20) NULL DEFAULT NULL,
-            diet_note varchar(255) NULL DEFAULT NULL,
+            diet_note text NULL,
+            companions text NULL,
             has_companion tinyint(1) NOT NULL DEFAULT 0,
             companion_name varchar(191) NULL DEFAULT NULL,
             companion_type varchar(10) NULL DEFAULT NULL,
@@ -93,5 +96,24 @@ class Wedding_RSVP_Activator {
         dbDelta($sql_guests);
         dbDelta($sql_responses);
         dbDelta($sql_pickups);
+    }
+
+    public static function upgrade_response_columns() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'wedding_responses';
+        $found = $wpdb->get_results('SHOW COLUMNS FROM ' . $table, ARRAY_A);
+        if (!is_array($found) || !$found) {
+            return;
+        }
+        $types = array();
+        foreach ($found as $column) {
+            $types[$column['Field']] = $column['Type'];
+        }
+        if (!isset($types['companions'])) {
+            $wpdb->query('ALTER TABLE ' . $table . ' ADD companions text NULL');
+        }
+        if (isset($types['diet_note']) && stripos((string) $types['diet_note'], 'varchar') !== false) {
+            $wpdb->query('ALTER TABLE ' . $table . ' MODIFY diet_note text NULL');
+        }
     }
 }

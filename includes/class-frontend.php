@@ -134,6 +134,9 @@ class Wedding_RSVP_Frontend {
             'couple' => Wedding_RSVP_Settings::couple_label($settings),
             'when' => Wedding_RSVP_Settings::format_datetime($settings['wedding_date']),
             'place' => Wedding_RSVP_Settings::place_label($settings),
+            'maps_url' => isset($settings['maps_url']) ? (string) $settings['maps_url'] : '',
+            'remaining' => Wedding_RSVP_Settings::remaining_label(isset($settings['deadline']) ? $settings['deadline'] : ''),
+            'max_companions' => 0,
             'deadline' => Wedding_RSVP_Settings::format_datetime($settings['deadline']),
         );
 
@@ -156,11 +159,12 @@ class Wedding_RSVP_Frontend {
                 'code' => 'preview',
                 'salutation' => 'Bạn',
                 'name' => 'Khách mẫu',
-                'invited_count' => 2,
+                'invited_count' => 4,
                 'status' => 'active',
                 'link' => home_url('/wedding/xem-thu/'),
             );
-            $view['allow_plus_one'] = true;
+            $view['max_companions'] = Wedding_RSVP_Response_Repo::max_companions($view['guest'], $settings);
+            $view['allow_plus_one'] = $view['max_companions'] > 0;
             return $view;
         }
 
@@ -194,7 +198,8 @@ class Wedding_RSVP_Frontend {
         $view['guest'] = $guest;
         $view['response'] = $response;
         $view['pickup'] = $pickup;
-        $view['allow_plus_one'] = Wedding_Stats::flag($settings, 'allow_plus_one_all', true) || (int) $guest['invited_count'] === 2;
+        $view['max_companions'] = Wedding_RSVP_Response_Repo::max_companions($guest, $settings);
+        $view['allow_plus_one'] = $view['max_companions'] > 0;
         $view['nonce'] = wp_create_nonce('wedding_rsvp_' . $guest['code']);
         $view['rest_url'] = rest_url('wedding/v1/rsvp/' . rawurlencode($guest['code']));
         return $view;
@@ -203,9 +208,9 @@ class Wedding_RSVP_Frontend {
     private static function og_title(array $settings) {
         $couple = Wedding_RSVP_Settings::couple_label($settings);
         if ($couple === '') {
-            return 'Thiệp mời cưới';
+            return 'Form khảo sát';
         }
-        return 'Thiệp mời cưới ' . $couple;
+        return 'Form khảo sát ' . $couple;
     }
 
     private function is_wedding_request() {

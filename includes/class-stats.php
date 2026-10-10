@@ -180,23 +180,26 @@ class Wedding_Stats {
     }
 
     public static function units(array $response, array $settings) {
-        $has_companion = (int) (isset($response['has_companion']) ? $response['has_companion'] : 0) === 1;
-        $type = isset($response['companion_type']) ? (string) $response['companion_type'] : '';
+        $list = Wedding_RSVP_Response_Repo::companion_list($response);
         $adults = 1;
         $children = 0;
-        if ($has_companion && $type === 'adult') {
-            $adults = 2;
-        } elseif ($has_companion && $type === 'child') {
-            $children = 1;
+        foreach ($list as $person) {
+            if ($person['type'] === 'child') {
+                $children++;
+            } else {
+                $adults++;
+            }
         }
 
         $bus = 0;
         if ((int) (isset($response['ride_bus']) ? $response['ride_bus'] : 0) === 1) {
             $bus = 1;
-            if ($has_companion && $type === 'adult') {
-                $bus++;
-            } elseif ($has_companion && $type === 'child' && self::flag($settings, 'child_takes_bus_seat', true)) {
-                $bus++;
+            foreach ($list as $person) {
+                if ($person['type'] === 'adult') {
+                    $bus++;
+                } elseif ($person['type'] === 'child' && self::flag($settings, 'child_takes_bus_seat', true)) {
+                    $bus++;
+                }
             }
         }
 

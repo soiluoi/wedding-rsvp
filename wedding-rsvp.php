@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WEDDING_RSVP_VERSION', '1.0.0');
-define('WEDDING_RSVP_DB_VERSION', '1.0.0');
+define('WEDDING_RSVP_DB_VERSION', '1.1.0');
 define('WEDDING_RSVP_FILE', __FILE__);
 define('WEDDING_RSVP_DIR', plugin_dir_path(__FILE__));
 define('WEDDING_RSVP_URL', plugin_dir_url(__FILE__));

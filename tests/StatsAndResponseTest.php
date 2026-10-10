@@ -167,6 +167,63 @@ class StatsAndResponseTest extends TestCase {
         $this->assertSame(28, $fleet['bus_empty_seats']);
     }
 
+    public function test_several_companions_are_counted_and_guests_cannot_choose_maybe() {
+        $normalized = Wedding_RSVP_Response_Repo::normalize(array(
+            'attending' => 'yes',
+            'ride_bus' => '1',
+            'phone' => '0901234567',
+            'companions' => array(
+                array('name' => 'An', 'type' => 'adult'),
+                array('name' => 'Bé Na', 'type' => 'child'),
+            ),
+            'diet_note' => "ăn chay\nkhông đậu phộng",
+        ), array('invited_count' => 4), $this->settings(), 'guest');
+        $this->assertSame(1, $normalized['has_companion']);
+        $this->assertNull($normalized['companion_age']);
+        $this->assertSame('An, Bé Na', $normalized['companion_name']);
+        $this->assertNull($normalized['companion_type']);
+        $decoded = json_decode($normalized['companions'], true);
+        $this->assertCount(2, $decoded);
+        $this->assertStringContainsString('không đậu phộng', $normalized['diet_note']);
+        $units = Wedding_Stats::units(array(
+            'attending' => 'yes',
+            'ride_bus' => 1,
+            'companions' => $decoded,
+        ), $this->settings());
+        $this->assertSame(2, $units['adults']);
+        $this->assertSame(1, $units['children']);
+        $this->assertSame(3, $units['bus']);
+        $this->assertSame('An · Người lớn, Bé Na · Trẻ em', Wedding_RSVP_Templates::companion_label(array('companions' => $decoded)));
+
+        try {
+            Wedding_RSVP_Response_Repo::normalize(
+                array('attending' => 'maybe', 'ride_bus' => '0'),
+                array('invited_count' => 1),
+                $this->settings(),
+                'guest'
+            );
+            $this->fail('Guests should not be able to answer maybe.');
+        } catch (Wedding_RSVP_Validation_Exception $e) {
+            $this->assertStringContainsString('tham dự', $e->getMessage());
+        }
+    }
+
+    public function test_remaining_time_is_relative() {
+        $tz = Wedding_RSVP_Settings::timezone();
+        $this->assertSame('Còn 2 ngày 3 giờ', Wedding_RSVP_Settings::remaining_label(
+            '2026-10-13 15:00:00',
+            new DateTimeImmutable('2026-10-11 12:00:00', $tz)
+        ));
+        $this->assertSame('Còn 40 phút', Wedding_RSVP_Settings::remaining_label(
+            '2026-10-11 12:40:00',
+            new DateTimeImmutable('2026-10-11 12:00:00', $tz)
+        ));
+        $this->assertSame('', Wedding_RSVP_Settings::remaining_label(
+            '2026-10-11 11:00:00',
+            new DateTimeImmutable('2026-10-11 12:00:00', $tz)
+        ));
+    }
+
     public function test_phone_accepts_spaces_dots_and_country_code() {
         $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('0901.234.567', true));
         $this->assertSame('0901234567', Wedding_RSVP_Response_Repo::normalize_phone('+84 901 234 567', true));

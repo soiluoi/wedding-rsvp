@@ -29,20 +29,33 @@
         var match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
         return match ? match[3] + '/' + match[2] + '/' + match[1] + ' ' + match[4] + ':' + match[5] : '';
     }
+    function companionList(response) {
+        if (response && Array.isArray(response.companions) && response.companions.length) {
+            return response.companions.filter(function (item) {
+                return item && (item.type === 'adult' || item.type === 'child');
+            });
+        }
+        if (response && Number(response.has_companion) === 1 && (response.companion_type === 'adult' || response.companion_type === 'child')) {
+            return [{name: response.companion_name || '', type: response.companion_type}];
+        }
+        return [];
+    }
     function units(response) {
         var empty = {adults: 0, children: 0, bus: 0};
         if (!response || response.attending !== 'yes') return empty;
-        var companion = Number(response.has_companion) === 1;
-        var type = response.companion_type || '';
         var adults = 1;
         var children = 0;
-        if (companion && type === 'adult') adults = 2;
-        else if (companion && type === 'child') children = 1;
+        companionList(response).forEach(function (person) {
+            if (person.type === 'child') children += 1;
+            else adults += 1;
+        });
         var bus = 0;
         if (Number(response.ride_bus) === 1) {
             bus = 1;
-            if (companion && type === 'adult') bus += 1;
-            else if (companion && type === 'child' && flag(cfg.settings.child_takes_bus_seat)) bus += 1;
+            companionList(response).forEach(function (person) {
+                if (person.type === 'adult') bus += 1;
+                else if (person.type === 'child' && flag(cfg.settings.child_takes_bus_seat)) bus += 1;
+            });
         }
         return {adults: adults, children: children, bus: bus};
     }
@@ -57,13 +70,12 @@
         return Number(response.ride_bus) === 1 ? 'Đi xe chung' : 'Mình tự đi';
     }
     function companionLabel(response) {
-        if (!response || Number(response.has_companion) !== 1) return '';
-        var parts = [];
-        if (response.companion_name) parts.push(response.companion_name);
-        if (response.companion_type === 'child') parts.push('Trẻ em');
-        if (response.companion_type === 'adult') parts.push('Người lớn');
-        if (response.companion_type === 'child' && response.companion_age != null) parts.push(response.companion_age + ' tuổi');
-        return parts.join(' · ');
+        var people = companionList(response);
+        if (!people.length) return '';
+        return people.map(function (person) {
+            var type = person.type === 'child' ? 'Trẻ em' : 'Người lớn';
+            return person.name ? person.name + ' · ' + type : type;
+        }).join(', ');
     }
     function cell(guest, key) {
         var response = guest.response || {};
@@ -252,17 +264,55 @@
         });
         return matrix;
     }
+    var editingGuest = null;
+    function maxCompanions(guest) {
+        var invited = Math.max(1, Number(guest && guest.invited_count) || 1);
+        var max = Math.max(0, invited - 1);
+        if (Number(cfg.settings.allow_plus_one_all) === 1) max = Math.max(max, 1);
+        return Math.min(10, max);
+    }
+    function readEditCompanions() {
+        var people = [];
+        document.querySelectorAll('#edit-companion-list .wedding-companion-row').forEach(function (row) {
+            people.push({
+                name: row.querySelector('[data-companion-name]').value,
+                type: row.querySelector('[data-companion-type]').value
+            });
+        });
+        return people;
+    }
+    function renderEditCompanions(seed) {
+        var max = maxCompanions(editingGuest);
+        var input = document.getElementById('edit-companion-count');
+        input.max = String(max);
+        var count = parseInt(input.value, 10);
+        if (isNaN(count) || count < 0) count = 0;
+        if (count > max) count = max;
+        input.value = String(count);
+        var people = seed || [];
+        var html = '';
+        for (var i = 0; i < count; i++) {
+            var person = people[i] || {name: '', type: 'adult'};
+            html += '<div class="wedding-companion-row">';
+            html += '<label>Người đi cùng ' + (i + 1) + '<input type="text" data-companion-name value="' + esc(person.name || '') + '"></label>';
+            html += '<label>Là<select data-companion-type>';
+            html += '<option value="adult"' + (person.type === 'child' ? '' : ' selected') + '>Người lớn</option>';
+            html += '<option value="child"' + (person.type === 'child' ? ' selected' : '') + '>Trẻ em</option>';
+            html += '</select></label></div>';
+        }
+        document.getElementById('edit-companion-list').innerHTML = html;
+    }
     function openEdit(guest) {
         var response = guest.response || {};
+        editingGuest = guest;
         document.getElementById('edit-id').value = guest.id;
         document.getElementById('wedding-edit-name').textContent = guest.salutation + ' ' + guest.name;
         document.getElementById('edit-attending').value = response.attending || 'yes';
         document.getElementById('edit-ride').value = response.ride_bus == null ? '1' : String(response.ride_bus);
         document.getElementById('edit-phone').value = response.phone || '';
-        document.getElementById('edit-companion').checked = Number(response.has_companion) === 1;
-        document.getElementById('edit-companion-name').value = response.companion_name || '';
-        document.getElementById('edit-companion-type').value = response.companion_type || 'adult';
-        document.getElementById('edit-age').value = response.companion_age == null ? '' : response.companion_age;
+        var people = companionList(response);
+        document.getElementById('edit-companion-count').value = String(people.length);
+        renderEditCompanions(people);
         document.getElementById('edit-diet').value = response.diet_note || '';
         document.getElementById('edit-message').value = response.message || '';
         document.getElementById('wedding-edit-error').hidden = true;
@@ -273,15 +323,14 @@
         var attending = document.getElementById('edit-attending').value;
         var coming = attending === 'yes' || attending === 'maybe';
         var bus = coming && document.getElementById('edit-ride').value === '1';
-        var plus = coming && document.getElementById('edit-companion').checked;
-        var child = plus && document.getElementById('edit-companion-type').value === 'child';
         document.querySelectorAll('[data-edit="coming"]').forEach(function (el) { el.hidden = !coming; });
         document.querySelectorAll('[data-edit="bus"]').forEach(function (el) { el.hidden = !bus; });
-        document.querySelectorAll('[data-edit="plus"]').forEach(function (el) { el.hidden = !plus; });
-        document.querySelectorAll('[data-edit="child"]').forEach(function (el) { el.hidden = !child; });
     }
 
     document.getElementById('wedding-edit-form').addEventListener('change', syncEdit);
+    document.getElementById('edit-companion-count').addEventListener('input', function () {
+        renderEditCompanions(readEditCompanions());
+    });
     document.getElementById('wedding-edit-close').addEventListener('click', function () {
         document.getElementById('wedding-dialog').hidden = true;
     });
@@ -292,12 +341,7 @@
         if (attending !== 'no') {
             payload.ride_bus = document.getElementById('edit-ride').value;
             if (payload.ride_bus === '1') payload.phone = document.getElementById('edit-phone').value;
-            payload.has_companion = document.getElementById('edit-companion').checked ? 1 : 0;
-            if (payload.has_companion) {
-                payload.companion_name = document.getElementById('edit-companion-name').value;
-                payload.companion_type = document.getElementById('edit-companion-type').value;
-                if (payload.companion_type === 'child') payload.companion_age = document.getElementById('edit-age').value;
-            }
+            payload.companions = readEditCompanions();
             payload.diet_note = document.getElementById('edit-diet').value;
         }
         var id = document.getElementById('edit-id').value;

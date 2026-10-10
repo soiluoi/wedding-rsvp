@@ -21,6 +21,11 @@
 .wedding-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 20px; }
 .wedding-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 14px 16px; }
 .wedding-card strong { display: block; font-size: 1.35rem; margin-top: 4px; }
+.wedding-place { margin-bottom: 16px; max-width: 640px; }
+.wedding-place h2 { margin-top: 0; }
+.wedding-place label { display: block; margin: 8px 0; }
+.wedding-place input { display: block; width: 100%; margin-top: 4px; }
+.wedding-companion-row { display: grid; grid-template-columns: 1fr 140px; gap: 8px; align-items: end; margin: 8px 0; }
 .wedding-bar { height: 8px; background: #f0f0f1; border-radius: 99px; overflow: hidden; margin-top: 8px; }
 .wedding-bar span { display: block; height: 100%; background: #7c3142; }
 .wedding-subtotal { font-weight: 600; background: #f6f7f7; }

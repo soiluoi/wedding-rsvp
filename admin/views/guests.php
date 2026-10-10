@@ -98,21 +98,11 @@
                 <label data-edit="bus">Số điện thoại
                     <input type="tel" id="edit-phone" inputmode="tel">
                 </label>
-                <label class="wedding-check"><input type="checkbox" id="edit-companion"> Mình đi cùng 1 người</label>
-                <p class="description">Người đi cùng sẽ đi chung xe với khách.</p>
-                <div data-edit="plus">
-                    <label>Tên người đi cùng <input type="text" id="edit-companion-name"></label>
-                    <label>Người đi cùng là
-                        <select id="edit-companion-type">
-                            <option value="adult">Người lớn</option>
-                            <option value="child">Trẻ em</option>
-                        </select>
-                    </label>
-                    <label data-edit="child">Bé bao nhiêu tuổi? <input type="number" id="edit-age" min="0" max="15"></label>
-                </div>
-                <label>Ghi chú ăn uống <input type="text" id="edit-diet"></label>
+                <label>Số người đi cùng <input type="number" id="edit-companion-count" min="0" max="10"></label>
+                <div id="edit-companion-list"></div>
+                <label>Ghi chú ăn uống <textarea id="edit-diet" rows="4"></textarea></label>
             </div>
-            <label>Lời chúc <textarea id="edit-message" rows="3"></textarea></label>
+            <input type="hidden" id="edit-message">
             <p id="wedding-edit-error" class="wedding-error" hidden></p>
             <p class="wedding-dialog-actions">
                 <button type="submit" class="button button-primary">Lưu</button>

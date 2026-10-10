@@ -57,7 +57,19 @@ h1 {
     background: var(--gold);
 }
 
-.hello { margin: 0 0 1rem; font-size: 1.05rem; }
+.hello { margin: 0 0 0.45rem; font-size: 1.05rem; }
+.opening { margin: 0 0 1rem; color: var(--muted); }
+.deadline {
+    margin: 0 0 1.25rem;
+    padding: 0.65rem 0.4rem;
+    border-top: 1px solid #f0e7dc;
+    border-bottom: 1px solid #f0e7dc;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: clamp(0.82rem, 3.6vw, 1rem);
+}
+.place-link { color: var(--wine); }
 .banner, .locked, .form-error {
     padding: 0.75rem 0.85rem;
     border-radius: 0.75rem;
@@ -74,7 +86,7 @@ h1 {
 }
 .facts li {
     display: grid;
-    grid-template-columns: 6.5rem 1fr;
+    grid-template-columns: 7rem 1fr;
     gap: 0.5rem;
     padding: 0.45rem 0;
     border-top: 1px solid #f0e7dc;
@@ -117,6 +129,15 @@ legend, .field, .check {
     box-shadow: inset 0 0 0 1px var(--wine);
 }
 .choice input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+.choice-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+.choice-row .choice { margin: 0; }
+.choice-row .choice span { justify-content: center; min-height: 2.75rem; }
+.companion { margin: 0 0 0.9rem; }
+.companion-title { margin: 0 0 0.35rem; font-weight: 600; }
 
 .field input, .field textarea, select {
     display: block;

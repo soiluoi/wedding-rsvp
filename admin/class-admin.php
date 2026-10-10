@@ -5,6 +5,7 @@ class Wedding_RSVP_Admin {
         add_action('admin_menu', array($this, 'menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue'));
         add_action('admin_post_wedding_rsvp_save_settings', array($this, 'save_settings'));
+        add_action('admin_post_wedding_rsvp_save_place', array($this, 'save_place'));
         add_action('admin_post_wedding_rsvp_export', array($this, 'export_csv'));
     }
 
@@ -52,6 +53,7 @@ class Wedding_RSVP_Admin {
                 'deadline' => Wedding_RSVP_Settings::format_datetime($settings['deadline']),
                 'invite_message_template' => $settings['invite_message_template'],
                 'pickup_message_template' => $settings['pickup_message_template'],
+                'allow_plus_one_all' => $settings['allow_plus_one_all'] ? 1 : 0,
                 'child_takes_bus_seat' => $settings['child_takes_bus_seat'] ? 1 : 0,
                 'child_counts_for_table' => $settings['child_counts_for_table'] ? 1 : 0,
             ),
@@ -109,6 +111,18 @@ class Wedding_RSVP_Admin {
         Wedding_RSVP_Frontend::register_rewrites();
         flush_rewrite_rules(false);
         wp_safe_redirect(admin_url('admin.php?page=wedding-rsvp-settings&updated=1'));
+        exit;
+    }
+
+    public function save_place() {
+        $this->guard();
+        check_admin_referer('wedding_rsvp_place');
+        $current = Wedding_RSVP_Settings::get();
+        $current['venue_name'] = isset($_POST['venue_name']) ? wp_unslash($_POST['venue_name']) : '';
+        $current['venue_address'] = isset($_POST['venue_address']) ? wp_unslash($_POST['venue_address']) : '';
+        $current['maps_url'] = isset($_POST['maps_url']) ? wp_unslash($_POST['maps_url']) : '';
+        Wedding_RSVP_Settings::update($current);
+        wp_safe_redirect(admin_url('admin.php?page=wedding-rsvp&place=1'));
         exit;
     }
 

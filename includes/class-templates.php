@@ -46,34 +46,30 @@ class Wedding_RSVP_Templates {
     }
 
     public static function companion_type_label($response) {
-        if (!is_array($response) || (int) (isset($response['has_companion']) ? $response['has_companion'] : 0) !== 1) {
+        $list = Wedding_RSVP_Response_Repo::companion_list($response);
+        if (!$list) {
             return '';
         }
-        if ((isset($response['companion_type']) ? $response['companion_type'] : '') === 'child') {
-            return 'Trẻ em';
+        $type = $list[0]['type'];
+        foreach ($list as $person) {
+            if ($person['type'] !== $type) {
+                return '';
+            }
         }
-        if ((isset($response['companion_type']) ? $response['companion_type'] : '') === 'adult') {
-            return 'Người lớn';
-        }
-        return '';
+        return $type === 'child' ? 'Trẻ em' : 'Người lớn';
     }
 
     public static function companion_label($response) {
-        if (!is_array($response) || (int) (isset($response['has_companion']) ? $response['has_companion'] : 0) !== 1) {
+        $list = Wedding_RSVP_Response_Repo::companion_list($response);
+        if (!$list) {
             return '';
         }
         $parts = array();
-        if (!empty($response['companion_name'])) {
-            $parts[] = $response['companion_name'];
+        foreach ($list as $person) {
+            $type = $person['type'] === 'child' ? 'Trẻ em' : 'Người lớn';
+            $parts[] = $person['name'] !== '' ? $person['name'] . ' · ' . $type : $type;
         }
-        $type = self::companion_type_label($response);
-        if ($type !== '') {
-            $parts[] = $type;
-        }
-        if ((isset($response['companion_type']) ? $response['companion_type'] : '') === 'child' && isset($response['companion_age']) && $response['companion_age'] !== null && $response['companion_age'] !== '') {
-            $parts[] = $response['companion_age'] . ' tuổi';
-        }
-        return implode(' · ', $parts);
+        return implode(', ', $parts);
     }
 
     public static function format_plain($text) {

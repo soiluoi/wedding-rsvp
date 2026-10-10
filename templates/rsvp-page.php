@@ -6,12 +6,11 @@ $view = Wedding_RSVP_Frontend::view();
 $settings = $view['settings'];
 $guest = $view['guest'];
 $response = $view['response'];
-$coming = $response && ($response['attending'] === 'yes' || $response['attending'] === 'maybe');
+$coming = $response && $response['attending'] === 'yes';
 $ride = ($response && $response['ride_bus'] !== null) ? (int) $response['ride_bus'] : null;
 $show_bus = $coming && $ride === 1;
-$companion_on = $response ? (int) $response['has_companion'] === 1 : ($guest && (int) $guest['invited_count'] === 2);
-$show_plus = $coming && $view['allow_plus_one'] && $companion_on;
-$show_child = $show_plus && $response && $response['companion_type'] === 'child';
+$companions = $response ? Wedding_RSVP_Response_Repo::companion_list($response) : array();
+$companion_count = count($companions);
 $show_summary = $response && !$view['preview'];
 $show_form = !$view['error'] && !$view['locked'] && !$show_summary;
 if ($view['preview']) {
@@ -22,6 +21,7 @@ $payload = array(
     'preview' => (bool) $view['preview'],
     'locked' => (bool) $view['locked'],
     'allowPlusOne' => (bool) $view['allow_plus_one'],
+    'maxCompanions' => (int) $view['max_companions'],
     'restUrl' => $view['rest_url'],
     'nonce' => $view['nonce'],
     'contact' => $settings['contact_info'],
@@ -36,7 +36,7 @@ $payload = array(
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <meta property="og:title" content="<?php echo esc_attr($view['og_title']); ?>">
-    <meta property="og:description" content="Mời bạn xác nhận tham dự.">
+    <meta property="og:description" content="Mời bạn điền form khảo sát.">
     <meta property="og:type" content="website">
     <?php if ($settings['og_image_url'] !== '') : ?>
         <meta property="og:image" content="<?php echo esc_url($settings['og_image_url']); ?>">
@@ -49,7 +49,7 @@ $payload = array(
 </head>
 <body>
 <main class="invite">
-    <p class="eyebrow">Thiệp mời</p>
+    <p class="eyebrow">Form khảo sát</p>
     <?php if ($view['couple'] !== '') : ?>
         <h1><?php echo esc_html($view['couple']); ?></h1>
     <?php endif; ?>
@@ -62,12 +62,19 @@ $payload = array(
             <p class="banner">Đây là bản xem thử. Câu trả lời sẽ không được lưu.<?php echo $view['settings'] && Wedding_RSVP_Settings::is_past_deadline($settings) ? ' Hạn chốt đang ở quá khứ, khách thật sẽ không sửa được.' : ''; ?></p>
         <?php endif; ?>
         <p class="hello">Chào <strong><?php echo esc_html(trim($guest['salutation'] . ' ' . $guest['name'])); ?></strong>!</p>
-        <?php if ($view['when'] !== '' || $view['place'] !== '') : ?>
+        <?php if (trim((string) $settings['opening_text']) !== '') : ?>
+            <p class="opening"><?php echo nl2br(esc_html($settings['opening_text'])); ?></p>
+        <?php endif; ?>
+        <?php if ($view['when'] !== '' || $view['place'] !== '' || $view['maps_url'] !== '') : ?>
             <ul class="facts">
-                <?php if ($view['when'] !== '') : ?><li><span>Khi nào</span><?php echo esc_html($view['when']); ?></li><?php endif; ?>
-                <?php if ($view['place'] !== '') : ?><li><span>Ở đâu</span><?php echo esc_html($view['place']); ?></li><?php endif; ?>
-                <?php if ($view['deadline'] !== '' && !$view['locked']) : ?><li><span>Hạn xác nhận</span><?php echo esc_html($view['deadline']); ?></li><?php endif; ?>
+                <?php if ($view['when'] !== '') : ?><li><span>Thời gian</span><?php echo esc_html($view['when']); ?></li><?php endif; ?>
+                <?php if ($view['place'] !== '' || $view['maps_url'] !== '') : ?>
+                    <li><span>Địa điểm</span><?php if ($view['maps_url'] !== '') : ?><a class="place-link" href="<?php echo esc_url($view['maps_url']); ?>" target="_blank" rel="noopener"><?php echo esc_html($view['place'] !== '' ? $view['place'] : 'Mở Google Maps'); ?></a><?php else : ?><?php echo esc_html($view['place']); ?><?php endif; ?></li>
+                <?php endif; ?>
             </ul>
+        <?php endif; ?>
+        <?php if ($view['remaining'] !== '' && !$view['locked']) : ?>
+            <p class="deadline">Hạn xác nhận: <?php echo esc_html($view['remaining']); ?></p>
         <?php endif; ?>
 
         <section id="summary" class="summary" <?php echo $show_summary ? '' : 'hidden'; ?>>
@@ -80,10 +87,9 @@ $payload = array(
                         <?php if ((int) $response['ride_bus'] === 1 && !empty($response['phone'])) : ?>
                             <li><span>Điện thoại</span><?php echo esc_html(Wedding_RSVP_Exporter::format_phone($response['phone'])); ?></li>
                         <?php endif; ?>
-                        <li><span>Người đi cùng</span><?php echo esc_html((int) $response['has_companion'] === 1 ? Wedding_RSVP_Templates::companion_label($response) : 'Không'); ?></li>
-                        <?php if (!empty($response['diet_note'])) : ?><li><span>Ăn uống</span><?php echo esc_html($response['diet_note']); ?></li><?php endif; ?>
+                        <li><span>Người đi cùng</span><?php echo esc_html($companions ? Wedding_RSVP_Templates::companion_label($response) : 'Không'); ?></li>
+                        <?php if (!empty($response['diet_note'])) : ?><li><span>Ăn uống</span><?php echo nl2br(esc_html($response['diet_note'])); ?></li><?php endif; ?>
                     <?php endif; ?>
-                    <?php if (!empty($response['message'])) : ?><li><span>Lời chúc</span><?php echo esc_html($response['message']); ?></li><?php endif; ?>
                 </ul>
                 <?php if ($view['pickup']) : ?>
                     <div class="pickup">
@@ -114,7 +120,6 @@ $payload = array(
                 <fieldset>
                     <legend>Bạn có tham dự được không?</legend>
                     <label class="choice"><input type="radio" name="attending" value="yes" <?php checked($response && $response['attending'] === 'yes'); ?>><span>Có, mình sẽ đến</span></label>
-                    <label class="choice"><input type="radio" name="attending" value="maybe" <?php checked($response && $response['attending'] === 'maybe'); ?>><span>Chưa chắc</span></label>
                     <label class="choice"><input type="radio" name="attending" value="no" <?php checked($response && $response['attending'] === 'no'); ?>><span>Rất tiếc, mình không đến được</span></label>
                 </fieldset>
                 <div data-show="coming" <?php echo $coming ? '' : 'hidden'; ?>>
@@ -127,32 +132,32 @@ $payload = array(
                         <?php echo Wedding_RSVP_Templates::format_plain($settings['bus_notice_text']); ?>
                     </div>
                     <label class="field" data-show="bus" <?php echo $show_bus ? '' : 'hidden'; ?>>Số điện thoại
-                        <input type="tel" name="phone" inputmode="tel" autocomplete="tel" value="<?php echo esc_attr($response && $response['phone'] ? Wedding_RSVP_Exporter::format_phone($response['phone']) : ''); ?>" placeholder="0901 234 567">
+                        <input type="tel" name="phone" inputmode="tel" autocomplete="tel" value="<?php echo esc_attr($response && $response['phone'] ? Wedding_RSVP_Exporter::format_phone($response['phone']) : ''); ?>" placeholder="(0936) 123 456">
                     </label>
-                    <?php if ($view['allow_plus_one']) : ?>
-                        <label class="check"><input type="checkbox" name="has_companion" value="1" <?php checked($companion_on); ?>> Mình đi cùng 1 người</label>
-                        <p class="hint">Người đi cùng sẽ đi chung xe với bạn.</p>
-                        <div data-show="plus" <?php echo $show_plus ? '' : 'hidden'; ?>>
-                            <label class="field">Tên người đi cùng
-                                <input type="text" name="companion_name" value="<?php echo esc_attr($response && $response['companion_name'] ? $response['companion_name'] : ''); ?>">
-                            </label>
-                            <fieldset>
-                                <legend>Người đi cùng là</legend>
-                                <label class="choice"><input type="radio" name="companion_type" value="adult" <?php checked($response && $response['companion_type'] === 'adult'); ?>><span>Người lớn</span></label>
-                                <label class="choice"><input type="radio" name="companion_type" value="child" <?php checked($response && $response['companion_type'] === 'child'); ?>><span>Trẻ em</span></label>
-                            </fieldset>
-                            <label class="field" data-show="child" <?php echo $show_child ? '' : 'hidden'; ?>>Bé bao nhiêu tuổi?
-                                <input type="number" name="companion_age" min="0" max="15" inputmode="numeric" value="<?php echo esc_attr($response && $response['companion_age'] !== null ? (string) $response['companion_age'] : ''); ?>">
-                            </label>
+                    <?php if ($view['max_companions'] > 0) : ?>
+                        <label class="field">Số người đi cùng
+                            <input type="number" name="companion_count" min="0" max="<?php echo (int) $view['max_companions']; ?>" inputmode="numeric" value="<?php echo (int) $companion_count; ?>">
+                        </label>
+                        <p class="hint">Người đi cùng sẽ đi chung xe với bạn. Tối đa <?php echo (int) $view['max_companions']; ?> người.</p>
+                        <div id="companion-list">
+                            <?php foreach ($companions as $index => $person) : ?>
+                                <div class="companion">
+                                    <p class="companion-title">Người đi cùng <?php echo (int) $index + 1; ?></p>
+                                    <label class="field">Tên
+                                        <input type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>">
+                                    </label>
+                                    <div class="choice-row">
+                                        <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="adult" <?php checked($person['type'] === 'adult'); ?>><span>Người lớn</span></label>
+                                        <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="child" <?php checked($person['type'] === 'child'); ?>><span>Trẻ em</span></label>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                     <label class="field">Ghi chú ăn uống <span class="optional">không bắt buộc</span>
-                        <input type="text" name="diet_note" value="<?php echo esc_attr($response && $response['diet_note'] ? $response['diet_note'] : ''); ?>" placeholder="Ăn chay, dị ứng...">
+                        <textarea name="diet_note" rows="4" placeholder="<?php echo esc_attr($companion_count > 0 ? 'Nếu bạn hay người đi cùng ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé' : 'Nếu bạn ăn chay hay đặc biệt dị ứng với món nào thì hãy note thêm thông tin nhé'); ?>"><?php echo esc_textarea($response && $response['diet_note'] ? $response['diet_note'] : ''); ?></textarea>
                     </label>
                 </div>
-                <label class="field">Lời chúc gửi cô dâu chú rể <span class="optional">không bắt buộc</span>
-                    <textarea name="message" rows="4"><?php echo esc_textarea($response && $response['message'] ? $response['message'] : ''); ?></textarea>
-                </label>
                 <p id="form-error" class="form-error" hidden></p>
                 <button type="submit" class="send"><?php echo $response ? 'Cập nhật câu trả lời' : 'Gửi xác nhận'; ?></button>
             </form>

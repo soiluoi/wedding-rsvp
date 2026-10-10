@@ -10,6 +10,8 @@ class Wedding_RSVP_Settings {
             'wedding_date' => '',
             'venue_name' => '',
             'venue_address' => '',
+            'maps_url' => '',
+            'opening_text' => 'Tụi mình rất mong được gặp bạn. Form này để sắp xếp chỗ ngồi và xe đưa đón, bạn điền giúp vài câu bên dưới nhé.',
             'deadline' => '',
             'allow_plus_one_all' => true,
             'seats_per_bus' => 43,
@@ -69,6 +71,8 @@ class Wedding_RSVP_Settings {
                 $clean[$key] = self::line($input[$key], 191);
             }
         }
+        $clean['opening_text'] = isset($input['opening_text']) ? self::block($input['opening_text'], 1000) : $defaults['opening_text'];
+        $clean['maps_url'] = isset($input['maps_url']) ? self::url($input['maps_url']) : '';
         $clean['contact_info'] = isset($input['contact_info']) ? self::block($input['contact_info'], 500) : '';
         $clean['bus_notice_text'] = isset($input['bus_notice_text']) ? self::block($input['bus_notice_text'], 2000) : $defaults['bus_notice_text'];
         $clean['invite_message_template'] = isset($input['invite_message_template']) ? self::block($input['invite_message_template'], 2000) : $defaults['invite_message_template'];
@@ -120,6 +124,47 @@ class Wedding_RSVP_Settings {
         return $dt->format('d/m/Y H:i');
     }
 
+    public static function remaining_label($deadline, $now = null) {
+        $deadline = trim((string) $deadline);
+        if ($deadline === '') {
+            return '';
+        }
+        $tz = self::timezone();
+        $deadline_at = date_create_immutable($deadline, $tz);
+        if (!$deadline_at) {
+            return '';
+        }
+        if ($now === null) {
+            $now = new DateTimeImmutable('now', $tz);
+        } elseif (is_int($now)) {
+            $now = (new DateTimeImmutable('@' . $now))->setTimezone($tz);
+        } elseif (is_string($now)) {
+            $now = new DateTimeImmutable($now, $tz);
+        }
+        $seconds = $deadline_at->getTimestamp() - $now->getTimestamp();
+        if ($seconds <= 0) {
+            return '';
+        }
+        $days = (int) floor($seconds / 86400);
+        $hours = (int) floor(($seconds % 86400) / 3600);
+        $minutes = (int) floor(($seconds % 3600) / 60);
+        if ($days > 0) {
+            $text = $days . ' ngày';
+            if ($hours > 0) {
+                $text .= ' ' . $hours . ' giờ';
+            }
+            return 'Còn ' . $text;
+        }
+        if ($hours > 0) {
+            $text = $hours . ' giờ';
+            if ($minutes > 0) {
+                $text .= ' ' . $minutes . ' phút';
+            }
+            return 'Còn ' . $text;
+        }
+        return 'Còn ' . max(1, $minutes) . ' phút';
+    }
+
     public static function datetime_local_value($value) {
         $value = trim((string) $value);
         if ($value === '') {
@@ -169,7 +214,7 @@ class Wedding_RSVP_Settings {
         $settings['delete_data_on_uninstall'] = self::bool_value($settings['delete_data_on_uninstall']);
         $settings['seats_per_bus'] = max(1, (int) $settings['seats_per_bus']);
         $settings['people_per_table'] = max(1, (int) $settings['people_per_table']);
-        foreach (array('bride_name', 'groom_name', 'wedding_date', 'venue_name', 'venue_address', 'deadline', 'bus_notice_text', 'invite_message_template', 'pickup_message_template', 'contact_info', 'og_image_url') as $key) {
+        foreach (array('bride_name', 'groom_name', 'wedding_date', 'venue_name', 'venue_address', 'maps_url', 'opening_text', 'deadline', 'bus_notice_text', 'invite_message_template', 'pickup_message_template', 'contact_info', 'og_image_url') as $key) {
             $settings[$key] = (string) $settings[$key];
         }
         return $settings;
