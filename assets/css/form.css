@@ -1,0 +1,184 @@
+:root {
+    color-scheme: light;
+    --paper: #f3eee6;
+    --card: #fffdfb;
+    --ink: #2b2422;
+    --muted: #74685f;
+    --wine: #7c3142;
+    --line: #eadfD4;
+    --gold: #a78462;
+    --bus: #f8f3e8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background:
+        radial-gradient(circle at top, #fbf7f1 0, var(--paper) 42%);
+    color: var(--ink);
+    font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+}
+
+.invite {
+    width: min(32rem, calc(100% - 2rem));
+    margin: 1.5rem auto 2.5rem;
+    padding: 1.75rem 1.25rem 1.5rem;
+    background: var(--card);
+    border: 1px solid #efe6da;
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 50px rgba(70, 42, 32, 0.06);
+}
+
+.eyebrow {
+    margin: 0;
+    text-align: center;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    color: var(--gold);
+}
+
+h1 {
+    margin: 0.35rem 0 0;
+    text-align: center;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: 2.4rem;
+    line-height: 1.15;
+}
+
+.rule {
+    width: 4.5rem;
+    height: 1px;
+    margin: 1rem auto 1.25rem;
+    background: var(--gold);
+}
+
+.hello { margin: 0 0 1rem; font-size: 1.05rem; }
+.banner, .locked, .form-error {
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.75rem;
+    background: #f8f1e6;
+    color: #6a4b32;
+}
+.form-error { background: #fdeeee; color: #8a3030; }
+.locked { margin-top: 1rem; }
+
+.facts {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+}
+.facts li {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.5rem;
+    padding: 0.45rem 0;
+    border-top: 1px solid #f0e7dc;
+}
+.facts span { color: var(--muted); }
+
+fieldset {
+    border: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+legend, .field, .check {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+}
+.optional { font-weight: 400; color: var(--muted); }
+
+.choice {
+    display: block;
+    margin: 0 0 0.5rem;
+    font-weight: 500;
+}
+.choice input {
+    position: absolute;
+    opacity: 0;
+}
+.choice span {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid #eadfd3;
+    border-radius: 0.8rem;
+    background: #fff;
+}
+.choice input:checked + span {
+    border-color: var(--wine);
+    background: #fbf4f5;
+    box-shadow: inset 0 0 0 1px var(--wine);
+}
+.choice input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.field input, .field textarea, select {
+    display: block;
+    width: 100%;
+    margin-top: 0.35rem;
+    padding: 0.75rem 0.8rem;
+    border: 1px solid #eadfd3;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+}
+.bus {
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 0.9rem;
+    background: var(--bus);
+    color: #5c5146;
+}
+.check { font-weight: 500; }
+.hint { margin: -0.2rem 0 0.8rem; color: var(--muted); font-size: 0.92rem; }
+
+.send, .ghost {
+    width: 100%;
+    min-height: 3rem;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.send {
+    border: 0;
+    background: var(--wine);
+    color: #fff;
+}
+.send:disabled { opacity: 0.6; }
+.ghost {
+    margin-top: 0.75rem;
+    border: 1px solid var(--wine);
+    background: transparent;
+    color: var(--wine);
+}
+.contact, .meta { color: var(--muted); font-size: 0.92rem; }
+.pickup {
+    margin-top: 0.8rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.8rem;
+    background: #f6f8f3;
+}
+.summary h2 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: 1.8rem;
+}
+.wedding-hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+@media (min-width: 720px) {
+    .invite { margin-top: 3rem; padding: 2.25rem 2rem 1.8rem; }
+}

@@ -1,0 +1,37 @@
+.wedding-admin .wedding-filters,
+.wedding-admin .wedding-toolbar,
+.wedding-admin .wedding-bulk,
+.wedding-admin .wedding-tabs,
+.wedding-admin .wedding-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 12px 0;
+}
+.wedding-admin .wedding-filters select,
+.wedding-admin .wedding-filters input,
+.wedding-admin .wedding-pickup-form input {
+    max-width: 100%;
+}
+.wedding-table-wrap { overflow-x: auto; }
+.wedding-admin table td, .wedding-admin table th { vertical-align: top; }
+.wedding-actions { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+.wedding-actions button, .wedding-actions select { width: 100%; }
+.wedding-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 20px; }
+.wedding-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 14px 16px; }
+.wedding-card strong { display: block; font-size: 1.35rem; margin-top: 4px; }
+.wedding-bar { height: 8px; background: #f0f0f1; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.wedding-bar span { display: block; height: 100%; background: #7c3142; }
+.wedding-subtotal { font-weight: 600; background: #f6f7f7; }
+.wedding-dialog { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100000; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto; }
+.wedding-dialog[hidden] { display: none; }
+.wedding-dialog-card { background: #fff; width: min(520px, 100%); padding: 20px; border-radius: 8px; }
+.wedding-dialog-card label, .wedding-pickup-form label, .wedding-block { display: block; margin: 8px 0; }
+.wedding-dialog-card input, .wedding-dialog-card select, .wedding-dialog-card textarea, .wedding-pickup-form input { width: 100%; }
+.wedding-error { color: #8a2424; }
+.wedding-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1d2327; color: #fff; padding: 12px 16px; border-radius: 8px; z-index: 100001; max-width: min(32rem, calc(100% - 24px)); }
+.wedding-diff { margin: 16px 0; padding: 12px; background: #fff; border: 1px solid #dcdcde; }
+.wedding-diff h2 { margin-top: 0; }
+.wedding-panel textarea { width: 100%; }
+.wedding-modes label { display: block; margin: 6px 0; }
