@@ -64,7 +64,7 @@
             var person = existing[i] || {name: '', type: ''};
             html += '<div class="companion">';
             html += '<p class="companion-title">Người đi cùng ' + (i + 1) + ' <span class="req" aria-hidden="true">*</span></p>';
-            html += '<input class="companion-name" type="text" name="companion_name_' + i + '" value="' + esc(person.name || '') + '" placeholder="Tên" aria-label="Tên">';
+            html += '<input class="companion-name" type="text" name="companion_name_' + i + '" value="' + esc(person.name || '') + '" placeholder="Tên *" aria-label="Tên *">';
             html += '<div class="choice-row">';
             html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="adult"' + (person.type === 'adult' ? ' checked' : '') + '><span>Người lớn</span></label>';
             html += '<label class="choice"><input type="radio" name="companion_type_' + i + '" value="child"' + (person.type === 'child' ? ' checked' : '') + '><span>Trẻ em</span></label>';

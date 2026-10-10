@@ -145,7 +145,7 @@ $payload = array(
                                 <?php foreach ($companions as $index => $person) : ?>
                                     <div class="companion">
                                         <p class="companion-title">Người đi cùng <?php echo (int) $index + 1; ?> <span class="req" aria-hidden="true">*</span></p>
-                                        <input class="companion-name" type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>" placeholder="Tên" aria-label="Tên">
+                                        <input class="companion-name" type="text" name="companion_name_<?php echo (int) $index; ?>" value="<?php echo esc_attr($person['name']); ?>" placeholder="Tên *" aria-label="Tên *">
                                         <div class="choice-row">
                                             <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="adult" <?php checked($person['type'] === 'adult'); ?>><span>Người lớn</span></label>
                                             <label class="choice"><input type="radio" name="companion_type_<?php echo (int) $index; ?>" value="child" <?php checked($person['type'] === 'child'); ?>><span>Trẻ em</span></label>

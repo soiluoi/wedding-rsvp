@@ -152,7 +152,7 @@ legend, .field, .check {
     font-size: 16px;
     font-weight: 400;
 }
-.companion-name { margin-top: 0; }
+.companion-name { margin-top: 0; margin-bottom: 0.75rem; }
 .field input::placeholder,
 .field textarea::placeholder,
 .companion-name::placeholder {
